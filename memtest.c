@@ -187,6 +187,12 @@ static int test_highmem_arch(void)
 
 	pr_emerg("++++++++++ Testing HighMem ++++++++++\n");
 	si_meminfo(&si);
+
+	if (MB_TO_BYTE(free_sysmem_space) > PAGES_TO_BYTE(si.freehigh)) {
+		pr_emerg("Not enough memory to test!\n");
+		return -ENOMEM;
+	}
+
 	alloc_total_mem = PAGES_TO_BYTE(si.freehigh) -
 			  MB_TO_BYTE(free_sysmem_space);
 	page_count = alloc_total_mem / PAGE_SIZE;
@@ -261,6 +267,13 @@ static int test_slab_on_highmem_arch(void)
 	mt.test_area_size = PAGE_SIZE;
 
 	si_meminfo(&si);
+
+	if (MB_TO_BYTE(free_slab_space) >
+	   (PAGES_TO_BYTE(si.freeram - si.freehigh))) {
+		pr_emerg("Not enough memory to test!\n");
+		return -ENOMEM;
+	}
+
 	alloc_total_mem = PAGES_TO_BYTE(si.freeram - si.freehigh) -
 			  MB_TO_BYTE(free_slab_space);
 	page_count = alloc_total_mem / PAGE_SIZE;
@@ -350,6 +363,10 @@ static int test_vmalloc_on_highmem_arch(void)
 		vm_count = vm_count - free_vmalloc_space;
 		for (i = vm_count; i < vm_count + free_vmalloc_space; i++)
 			vfree(vm_list[i]);
+	} else {
+		pr_emerg("Not enough memory to test!\n");
+		fail = -ENOMEM;
+		goto out;
 	}
 
 	pr_emerg("allocated %llu MB Vmalloc test memory\n",
@@ -371,6 +388,7 @@ static int test_vmalloc_on_highmem_arch(void)
 		sleep_and_check_testrun_state(&fail);
 	}
 
+out:
 	for (i = 0; i < vm_count; i++)
 		vfree(vm_list[i]);
 
@@ -384,6 +402,11 @@ static int test_mem(void)
 {
 	int ret = 0, fail = 0;
 	u64 i = 0;
+
+	if (MB_TO_BYTE(free_sysmem_space) > PAGES_TO_BYTE(si_mem_available())) {
+		pr_emerg("Not enough memory to test!\n");
+		return -ENOMEM;
+	}
 
 	mt.test_area_size = PAGES_TO_BYTE(si_mem_available()) -
 			    MB_TO_BYTE(free_sysmem_space);
