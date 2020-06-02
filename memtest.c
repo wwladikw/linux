@@ -352,8 +352,8 @@ static int test_vmalloc_on_highmem_arch(void)
 
 	while (true) {
 		vm_list[vm_count] = __vmalloc(mt.test_area_size,
-					      GFP_KERNEL | __GFP_NOWARN,
-					      PAGE_KERNEL);
+					      GFP_KERNEL | __GFP_NOWARN |
+					      __GFP_NORETRY, PAGE_KERNEL);
 		if (!vm_list[vm_count])
 			break;
 
